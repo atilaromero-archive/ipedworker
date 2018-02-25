@@ -1,0 +1,13 @@
+port: PORT
+host: HOST
+notifyURL: NOTIFY_URL
+watchURL: WATCH_URL
+watchSeconds: WATCH_SECONDS
+docker:
+  socketPath: DOCKER_SOCKET
+  host: DOCKER_HOST
+  image: DOCKER_IMAGE
+  volume: DOCKER_VOLUME
+  cmd: DOCKER_CMD
+java:
+  Xmx: JAVA_XMX

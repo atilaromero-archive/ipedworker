@@ -1,0 +1,13 @@
+port: 80
+host: 'localhost'
+notifyURL:
+watchURL:
+watchSeconds: 10
+docker:
+  socketPath: "/var/run/docker.sock"
+  host:
+  image: "ipeddocker/iped:3.13.5"
+  volume:
+  cmd:
+java:
+  Xmx: 100G
