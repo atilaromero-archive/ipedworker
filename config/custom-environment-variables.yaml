@@ -1,5 +1,6 @@
 port: PORT
 host: HOST
+lockURL: LOCK_URL
 notifyURL: NOTIFY_URL
 watchURL: WATCH_URL
 watchSeconds: WATCH_SECONDS

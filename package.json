@@ -4,6 +4,7 @@
   "description": "IPED worker instance - service that receives a path and creates a case",
   "main": "src/server.js",
   "scripts": {
+    "test": "jest",
     "start": "nodemon --exec babel-node src/server.js",
     "build": "babel src -d build",
     "serve": "node build/server.js"
@@ -23,6 +24,7 @@
     "vision": "^5.3.1"
   },
   "devDependencies": {
-    "eslint": "^4.18.1"
+    "eslint": "^4.18.1",
+    "jest": "^23.3.0"
   }
 }

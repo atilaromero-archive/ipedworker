@@ -1,7 +1,6 @@
 import Joi from 'joi';
-const Container = require('../container')
 
-module.exports = {
+module.exports = (container) => ({
   method: 'POST',
   path: '/start',
   config: {
@@ -19,10 +18,11 @@ module.exports = {
     },
     handler: async (req, h) => {
       try {
-        return h.response(await Container.start(req.payload))
+        const {evidence, caseDir, cmd} = req.payload
+        return container.lockCreateStart(evidence, caseDir, cmd)
       } catch (err) {
         return h.response(err.toString()).code(500)
       }
     }
   }
-};
+})

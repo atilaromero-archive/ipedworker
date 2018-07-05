@@ -1,5 +1,6 @@
 port: 80
 host: 'localhost'
+lockURL:
 notifyURL:
 watchURL:
 watchSeconds: 10

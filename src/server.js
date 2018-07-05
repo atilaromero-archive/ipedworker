@@ -2,12 +2,23 @@ const Hapi = require('hapi');
 const Inert = require('inert');
 const Vision = require('vision');
 const HapiSwagger = require('hapi-swagger');
+const assert = require('assert')
 import config from 'config'
+const {Docker} = require('node-docker-api')
 
-const Container = require('./container')
+import {NoLock, RemoteLocker} from './docker/remote-locker'
+import {Container} from './docker/container'
 const Pack = require('../package');
 
-(async () => {
+assert(!(config.docker.host && config.docker.socketPath), 'Use DOCKER_HOST or DOCKER_SOCKET, but not both');
+let locker
+if (config.lockURL) {
+  locker = new RemoteLocker()
+} else {
+  locker = new NoLock()
+}
+
+const runserver = async () => {
   const server = await new Hapi.Server({
     host: config.host,
     port: config.port,
@@ -30,11 +41,19 @@ const Pack = require('../package');
     }
   ]);
 
+  const docker = new Docker(config.docker.host?
+    {host: config.docker.host}
+    :{socketPath: config.docker.socketPath}
+  )
+
+  const container = new Container(docker, locker)
+
+
   const routes = [
-    require('./routes/state-get'),
+    require('./routes/status-get')(container),
   ]
   if (!config.watchURL) {
-    routes.push(require('./routes/start-post'))
+    routes.push(require('./routes/start-post')(container))
   }
   try {
     await server.route(routes);
@@ -47,5 +66,6 @@ const Pack = require('../package');
   } catch(err) {
     console.log(err);
   }
+}
 
-})();
+runserver();
