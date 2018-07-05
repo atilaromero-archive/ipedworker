@@ -1,5 +1,5 @@
 const fetch = require('node-fetch')
-
+const config = require('config')
 
 const stateHandler = async (req, h) => {
   if (Container.instance) {
@@ -42,6 +42,9 @@ const watchHandler = async (url) => {
     await new Promise(resolve => setTimeout(resolve, (config.watchSeconds || 1) * 1000))
   }
 }
+
+const notifyHandler = () => null;
+const startHandler = () => null;
 
 const Container = {
   running: false,
