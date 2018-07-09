@@ -1,6 +1,6 @@
 {
   "name": "worker",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "IPED worker instance - service that receives a path and creates a case",
   "main": "src/server.js",
   "scripts": {
