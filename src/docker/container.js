@@ -1,5 +1,7 @@
 const assert = require('assert')
 const createConfig = require('./create-config')
+const config = require('config')
+const fetch = require('node-fetch')
 const EventEmitter = require('events')
 
 export class Container extends EventEmitter {
@@ -19,6 +21,7 @@ export class Container extends EventEmitter {
     this.delete = this.delete.bind(this)
     this.followLogs = this.followLogs.bind(this)
     this.lockCreateStart = this.lockCreateStart.bind(this)
+    this.watch = this.watch.bind(this)
   }
 
   async lock (evidence) {
@@ -39,7 +42,8 @@ export class Container extends EventEmitter {
   }
 
   async status () {
-    return await this.instance.status()
+    console.log(this, this.instance, this.instance.status())
+    return this.instance.status()
   }
 
   async create (evidence, caseDir, cmd) {
@@ -91,5 +95,30 @@ export class Container extends EventEmitter {
     const unlock = true
     this.start(rm, unlock)
     return id
+  }
+
+  async watch (url) {
+    const single = async () => {
+      try {
+        const req = await fetch(url)
+        if (!req.ok) {
+          console.log(await req.text())
+          return
+        }
+        const data = await req.json()
+        if (!data) {
+          return
+        }
+        await Container.start(data)
+        await Container.instance.wait()
+      } catch (err) {
+        console.log(err)
+      }
+    }
+    /*eslint no-constant-condition: ["error", { "checkLoops": false }]*/
+    while (true) {
+      await single()
+      await new Promise(resolve => setTimeout(resolve, (config.watchSeconds || 1) * 1000))
+    }
   }
 }

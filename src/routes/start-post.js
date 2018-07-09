@@ -8,18 +8,18 @@ module.exports = (container) => ({
     tags: ['api'],
     validate: {
       payload: {
-        imagePath: Joi.string()
+        evidencePath: Joi.string()
           .required()
           .description('input file path'),
         outputPath: Joi.string()
-          .description("optional - case folder relative to imagePath's parent folder - defaults to IPED")
-          .default(''),
+          .description("optional - case folder relative to evidencePath's parent folder - defaults to IPED")
+          .default('IPED'),
       },
     },
     handler: async (req, h) => {
       try {
-        const {evidence, caseDir, cmd} = req.payload
-        return container.lockCreateStart(evidence, caseDir, cmd)
+        const {evidencePath, outputPath, cmd} = req.payload
+        return container.lockCreateStart(evidencePath, outputPath, cmd)
       } catch (err) {
         return h.response(err.toString()).code(500)
       }

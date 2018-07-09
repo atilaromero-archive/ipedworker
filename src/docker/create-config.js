@@ -6,8 +6,8 @@ function createConfig(evidence, caseDir, dockerCmd) {
     Image: config.docker.image,
     Env: [
       'LANG=C.UTF-8',
-      'EVIDENCE=' + path.basename(evidence),
-      'CASEDIR=' + (caseDir || 'IPED'),
+      'IMAGE=' + path.basename(evidence),
+      'OUTPUT=' + (caseDir || 'IPED'),
       'Xmx=' + config.java.Xmx
     ],
     WorkingDir: path.dirname(evidence),
@@ -34,6 +34,7 @@ function createConfig(evidence, caseDir, dockerCmd) {
   if (dockerCmd || config.docker.cmd) {
     parameters.Cmd = dockerCmd || config.docker.cmd
   }
+  console.log({parameters})
   return parameters
 }
 
