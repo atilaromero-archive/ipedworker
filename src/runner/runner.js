@@ -9,9 +9,6 @@ export class Runner extends EventEmitter {
   constructor (remoteLocker) {
     super()
     this.proc = null
-    this.cmd = ""
-    this.workingDir = ""
-    this.java = ""
     this.locked = false
     this.remoteLocker = remoteLocker
 
@@ -48,12 +45,21 @@ export class Runner extends EventEmitter {
   }
 
   async create (evidence, caseDir, profile) {
-
-    this.createConfig(evidence)
-    var spawn = require('child_process').spawn;
-    var proc = spawn(this.java,  ['-jar', this.cmd, '-d ',evidence, '-o ',this.workingDir+"/"+caseDir, '-profile ',profile,'--portable','--nologfile','--nogui']);
-
-    //this.emit('create')
+    let workingDir = path.dirname(evidence);
+    let spawn = require('child_process').spawn;
+    let args = [
+      '-Djava.awt.headless=true',
+      '-jar', config.runner.jar,
+      '-d', path.basename(evidence),
+      '-o', caseDir,
+      '-profile', profile,
+      '--portable',
+      '--nologfile',
+      '--nogui'
+    ]
+    let proc = spawn(config.runner.java,  args, {
+      cwd: workingDir,
+    });
     return proc
   }
 
