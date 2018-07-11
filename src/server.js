@@ -2,7 +2,6 @@ const Hapi = require('hapi');
 const Inert = require('inert');
 const Vision = require('vision');
 const HapiSwagger = require('hapi-swagger');
-const assert = require('assert')
 import config from 'config'
 
 import {NoLock, RemoteLocker} from './runner/remote-locker'

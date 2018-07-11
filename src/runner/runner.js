@@ -18,10 +18,8 @@ export class Runner extends EventEmitter {
     this.lock = this.lock.bind(this)
     this.unlock = this.unlock.bind(this)
     this.status = this.status.bind(this)
-    this.createConfig = this.createConfig.bind(this)
     this.create = this.create.bind(this)
     this.start = this.start.bind(this)
-    this.delete = this.delete.bind(this)
     this.followLogs = this.followLogs.bind(this)
     this.lockCreateStart = this.lockCreateStart.bind(this)
     this.watch = this.watch.bind(this)
@@ -49,18 +47,6 @@ export class Runner extends EventEmitter {
     return this.proc.exitCode
   }
 
-
-
-  async createConfig(evidence) {
-
-        this.cmd = config.runner.cmd;
-        this.java = config.runner.java;
-        this.workingDir = path.dirname(evidence);
-  }
-
-
-
-
   async create (evidence, caseDir, profile) {
 
     this.createConfig(evidence)
@@ -71,21 +57,13 @@ export class Runner extends EventEmitter {
     return proc
   }
 
-  async start(rm=false, unlock=false) {
-    //this.emit('start')
+  async start(unlock=false) {
     this.followLogs()
     const exitStatus = this.proc.exitCode
     if (unlock) {
       await this.unlock()
     }
-    if (rm) {
-      await this.delete()
-    }
     return exitStatus
-  }
-
-  async delete () {
-    this.instance.delete()
   }
 
   async followLogs () {
@@ -97,11 +75,11 @@ export class Runner extends EventEmitter {
     })
   }
 
-  async lockCreateStart (evidence, caseDir, profile, rm=false) {
+  async lockCreateStart (evidence, caseDir, profile) {
     await this.lock(evidence)
     this.proc = await this.create(evidence, caseDir, profile)
     const unlock = true
-    this.start(rm, unlock)
+    this.start(unlock)
     return this.proc
   }
 
@@ -118,8 +96,9 @@ export class Runner extends EventEmitter {
         if (!data) {
           return
         }
-        await Runner.start(data)
-        await Runner.instance.wait()
+        const {evidencePath,outputPath,profile} = data
+        await Runner.lockCreateStart(evidencePath,outputPath,profile)
+        await Runner.wait()
       } catch (err) {
         console.log(err)
       }
