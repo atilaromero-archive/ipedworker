@@ -14,7 +14,7 @@ module.exports = (runner) => ({
         outputPath: Joi.string()
           .description("optional - case folder relative to evidencePath's parent folder - defaults to IPED")
           .default('SARD'),
-	profile: Joi.string()
+        profile: Joi.string()
           .description("optional - profile of the case - defaults to forensic")
           .default('forensic'),
 
@@ -23,11 +23,9 @@ module.exports = (runner) => ({
     handler: async (req, h) => {
       try {
         const {evidencePath, outputPath, profile} = req.payload
-	let proc
-        proc = runner.lockCreateStart(evidencePath, outputPath, profile)
+        runner.lockCreateStart(evidencePath, outputPath, profile)
         return h.response({Result: "Submission Success"})
-	
-      } catch (e) {
+      } catch (err) {
         return h.response(err.toString()).code(500)
       }
     }

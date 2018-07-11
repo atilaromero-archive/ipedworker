@@ -6,21 +6,21 @@ module.exports = (runner) => ({
     tags: ['api'],
     handler: async (req, h) => {
       if (runner.proc == null){
-          return h.response({Status: "Not running"})
-        }
+        return h.response({Status: "Not running"})
+      }
       else if ((runner.proc.exitCode == null)&&(runner.proc.pid != null)) {
-          return h.response({Status: "Running"})
-        }
+        return h.response({Status: "Running"})
+      }
       else if ((runner.proc.exitCode == null)&&(runner.proc.pid == null)){
-          return h.response({Status: "Not running"})
-        }
+        return h.response({Status: "Not running"})
+      }
       else if (!runner.proc.exitCode){
-          return h.response({Running: "Not running, with previous success run"})
-        }
+        return h.response({Running: "Not running, with previous success run"})
+      }
       else {
-          return h.response({Running: "Not running, with previous failure run"})
-        }
+        return h.response({Running: "Not running, with previous failure run"})
       }
     }
   }
+}
 );

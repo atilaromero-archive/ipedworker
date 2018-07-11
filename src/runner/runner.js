@@ -5,7 +5,7 @@ const EventEmitter = require('events')
 const path = require('path')
 
 export class Runner extends EventEmitter {
-  
+
   constructor (remoteLocker) {
     super()
     this.proc = null
@@ -75,12 +75,6 @@ export class Runner extends EventEmitter {
     //this.emit('start')
     this.followLogs()
     const exitStatus = this.proc.exitCode
-    //if (exitStatus == 0) {
-    //  this.emit('end')
-    //} else {
-    //  this.emit('error')
-    //}
-
     if (unlock) {
       await this.unlock()
     }
@@ -95,14 +89,12 @@ export class Runner extends EventEmitter {
   }
 
   async followLogs () {
-    
-    this.proc.stdout.on('data', (data) => { 
-                console.log("STDOUT:", data.toString())
-      });
-    this.proc.stderr.on('data', (data) => { 
-                console.error("STDERR:", data.toString())
-      })
-
+    this.proc.stdout.on('data', (data) => {
+      console.log(data.toString())
+    });
+    this.proc.stderr.on('data', (data) => {
+      console.error(data.toString())
+    })
   }
 
   async lockCreateStart (evidence, caseDir, profile, rm=false) {
