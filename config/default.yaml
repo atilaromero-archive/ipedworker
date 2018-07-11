@@ -1,5 +1,10 @@
 host: "localhost"
 port: 80
+lockURL: ""
+notifyURL: ""
+watchURL: ""
+watchSeconds: 1
 runner:
-   cmd: "/root/IPED/iped-3.14.2/iped.jar"
+   jar: "/root/IPED/iped-3.14.2/iped.jar"
    java: "/usr/bin/java"
+   Xmx: "1G"
