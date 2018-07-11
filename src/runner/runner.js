@@ -1,21 +1,24 @@
 const assert = require('assert')
-const createConfig = require('./create-config')
 const config = require('config')
 const fetch = require('node-fetch')
 const EventEmitter = require('events')
+const path = require('path')
 
-export class Container extends EventEmitter {
-
-  constructor (docker, remoteLocker) {
+export class Runner extends EventEmitter {
+  
+  constructor (remoteLocker) {
     super()
-    this.docker = docker
-    this.instance = null
+    this.proc = null
+    this.cmd = ""
+    this.workingDir = ""
+    this.java = ""
     this.locked = false
     this.remoteLocker = remoteLocker
 
     this.lock = this.lock.bind(this)
     this.unlock = this.unlock.bind(this)
     this.status = this.status.bind(this)
+    this.createConfig = this.createConfig.bind(this)
     this.create = this.create.bind(this)
     this.start = this.start.bind(this)
     this.delete = this.delete.bind(this)
@@ -42,27 +45,42 @@ export class Container extends EventEmitter {
   }
 
   async status () {
-    console.log(this, this.instance, this.instance.status())
-    return this.instance.status()
+    console.log(this, this.proc.pid, this.proc.on('exit', () => console.log("Program exit code: ",this.proc.exitCode,)))
+    return this.proc.exitCode
   }
 
-  async create (evidence, caseDir, cmd) {
-    const parameters = createConfig(evidence, caseDir, cmd)
-    this.instance = await this.docker.container.create(parameters)
-    this.emit('create')
-    return this.instance.id
+
+
+  async createConfig(evidence) {
+
+        this.cmd = config.runner.cmd;
+        this.java = config.runner.java;
+        this.workingDir = path.dirname(evidence);
+  }
+
+
+
+
+  async create (evidence, caseDir, profile) {
+
+    this.createConfig(evidence)
+    var spawn = require('child_process').spawn;
+    var proc = spawn(this.java,  ['-jar', this.cmd, '-d ',evidence, '-o ',this.workingDir+"/"+caseDir, '-profile ',profile,'--portable','--nologfile','--nogui']);
+
+    //this.emit('create')
+    return proc
   }
 
   async start(rm=false, unlock=false) {
-    await this.instance.start()
-    this.emit('start')
+    //this.emit('start')
     this.followLogs()
-    const exitStatus = await this.instance.wait()
-    if (exitStatus.StatusCode == 0) {
-      this.emit('end')
-    } else {
-      this.emit('error')
-    }
+    const exitStatus = this.proc.exitCode
+    //if (exitStatus == 0) {
+    //  this.emit('end')
+    //} else {
+    //  this.emit('error')
+    //}
+
     if (unlock) {
       await this.unlock()
     }
@@ -77,25 +95,24 @@ export class Container extends EventEmitter {
   }
 
   async followLogs () {
-    const stream = await this.instance.logs({
-      follow: true,
-      stdout: true,
-      stderr: true,
-      timestamps: true,
-    })
-    //docker API stream chunk has a header of 8 bytes
-    stream.on('data', chunk => { process.stdout.write(chunk.slice(8))})
-    stream.on('error', chunk => { process.stdout.write(chunk.slice(8))})
+    
+    this.proc.stdout.on('data', (data) => { 
+                console.log("STDOUT:", data.toString())
+      });
+    this.proc.stderr.on('data', (data) => { 
+                console.error("STDERR:", data.toString())
+      })
+
   }
 
-  async lockCreateStart (evidence, caseDir, cmd, rm=false) {
+  async lockCreateStart (evidence, caseDir, profile, rm=false) {
     await this.lock(evidence)
-    let id
-    id = await this.create(evidence, caseDir, cmd)
+    this.proc = await this.create(evidence, caseDir, profile)
     const unlock = true
     this.start(rm, unlock)
-    return id
+    return this.proc
   }
+
 
   async watch (url) {
     const single = async () => {
@@ -109,8 +126,8 @@ export class Container extends EventEmitter {
         if (!data) {
           return
         }
-        await Container.start(data)
-        await Container.instance.wait()
+        await Runner.start(data)
+        await Runner.instance.wait()
       } catch (err) {
         console.log(err)
       }

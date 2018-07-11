@@ -1,22 +1,26 @@
-module.exports = (container) => ({
+module.exports = (runner) => ({
   method: 'GET',
   path: '/status',
   config: {
-    description: 'Returns docker container status',
+    description: 'Returna o status do POD',
     tags: ['api'],
     handler: async (req, h) => {
-      if (container.instance) {
-        try {
-          const status = await container.instance.status()
-          const State = status.data.State
-          container.running = State.Running
-          return h.response(State)
-        } catch (err) {
-          //If can't get status, assume not running
+      if (runner.proc == null){
+          return h.response({Status: "Not running"})
+        }
+      else if ((runner.proc.exitCode == null)&&(runner.proc.pid != null)) {
+          return h.response({Status: "Running"})
+        }
+      else if ((runner.proc.exitCode == null)&&(runner.proc.pid == null)){
+          return h.response({Status: "Not running"})
+        }
+      else if (!runner.proc.exitCode){
+          return h.response({Running: "Not running, with previous success run"})
+        }
+      else {
+          return h.response({Running: "Not running, with previous failure run"})
         }
       }
-      container.running = false
-      return h.response({Running: container.running})
     }
   }
-});
+);

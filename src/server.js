@@ -4,19 +4,18 @@ const Vision = require('vision');
 const HapiSwagger = require('hapi-swagger');
 const assert = require('assert')
 import config from 'config'
-const {Docker} = require('node-docker-api')
 
-import {NoLock, RemoteLocker} from './docker/remote-locker'
-import {Container} from './docker/container'
+import {NoLock, RemoteLocker} from './runner/remote-locker'
+import {Runner} from './runner/runner'
 const Pack = require('../package');
 
-assert(!(config.docker.host && config.docker.socketPath), 'Use DOCKER_HOST or DOCKER_SOCKET, but not both');
 let locker
 if (config.lockURL) {
   locker = new RemoteLocker()
 } else {
   locker = new NoLock()
 }
+
 
 const runserver = async () => {
   const server = await new Hapi.Server({
@@ -26,7 +25,7 @@ const runserver = async () => {
 
   const swaggerOptions = {
     info: {
-      title: 'Test API Documentation',
+      title: 'IPED Job Submission API',
       version: Pack.version,
     },
     documentationPath: '/'
@@ -41,19 +40,15 @@ const runserver = async () => {
     }
   ]);
 
-  const docker = new Docker(config.docker.host?
-    {host: config.docker.host}
-    :{socketPath: config.docker.socketPath}
-  )
 
-  const container = new Container(docker, locker)
+  const runner = new Runner(locker)
 
 
   const routes = [
-    require('./routes/status-get')(container),
+    require('./routes/status-get')(runner),
   ]
   if (!config.watchURL) {
-    routes.push(require('./routes/start-post')(container))
+    routes.push(require('./routes/start-post')(runner));
   }
   try {
     await server.route(routes);
@@ -61,7 +56,7 @@ const runserver = async () => {
     console.log('Server running at:', server.info.uri);
     if (config.watchURL) {
       console.log('watching', config.watchURL)
-      Container.watch(config.watchURL)
+      Runner.watch(config.watchURL)
     }
   } catch(err) {
     console.log(err);
