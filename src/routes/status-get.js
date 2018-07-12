@@ -15,10 +15,10 @@ module.exports = (runner) => ({
         return h.response({Status: "Not running"})
       }
       else if (!runner.proc.exitCode){
-        return h.response({Running: "Not running, with previous success run"})
+        return h.response({Status: "Not running, with previous successful run"})
       }
       else {
-        return h.response({Running: "Not running, with previous failure run"})
+        return h.response({Status: "Not running, with previous failed run"})
       }
     }
   }
