@@ -23,7 +23,7 @@ module.exports = (runner) => ({
     handler: async (req, h) => {
       try {
         const {evidencePath, outputPath, profile} = req.payload
-        runner.lockCreateStart(evidencePath, outputPath, profile)
+        runner.start(evidencePath, outputPath, profile)
         return h.response({Result: "Submission Success"})
       } catch (err) {
         return h.response(err.toString()).code(500)

@@ -3,50 +3,24 @@ const config = require('config')
 const fetch = require('node-fetch')
 const EventEmitter = require('events')
 const path = require('path')
+const spawn = require('child_process').spawn
 
 export class Runner extends EventEmitter {
 
-  constructor (remoteLocker) {
+  constructor (remoteLocker, notifier) {
     super()
     this.proc = null
     this.locked = false
     this.remoteLocker = remoteLocker
+    this.notifier = notifier
 
-    this.lock = this.lock.bind(this)
-    this.unlock = this.unlock.bind(this)
-    this.status = this.status.bind(this)
-    this.create = this.create.bind(this)
     this.start = this.start.bind(this)
-    this.followLogs = this.followLogs.bind(this)
-    this.lockCreateStart = this.lockCreateStart.bind(this)
+    this.wait = this.wait.bind(this)
     this.watch = this.watch.bind(this)
   }
 
-  async lock (evidence) {
-    assert(!this.locked)
-    this.locked = true
-    try {
-      await this.remoteLocker.lock(evidence)
-    } catch (e) {
-      this.locked = false
-      throw e
-    }
-  }
-
-  async unlock () {
-    assert(this.locked)
-    await this.remoteLocker.unlock()
-    this.locked = false
-  }
-
-  async status () {
-    console.log(this, this.proc.pid, this.proc.on('exit', () => console.log("Program exit code: ",this.proc.exitCode,)))
-    return this.proc.exitCode
-  }
-
-  async create (evidence, caseDir, profile) {
+  async start (evidence, caseDir, profile) {
     let workingDir = path.dirname(evidence);
-    let spawn = require('child_process').spawn;
     let args = [
       '-Djava.awt.headless=true',
       '-jar', config.runner.jar,
@@ -57,38 +31,53 @@ export class Runner extends EventEmitter {
       '--nologfile',
       '--nogui'
     ]
-    let proc = spawn(config.runner.java,  args, {
-      cwd: workingDir,
-    });
-    return proc
-  }
-
-  async start(unlock=false) {
-    this.followLogs()
-    const exitStatus = this.proc.exitCode
-    if (unlock) {
-      await this.unlock()
+    assert (this.locked === false)
+    this.locked = true
+    try {
+      await this.lock(evidence)
+      await this.notifier.notify('running', {evidencePath: evidence})
+      this.proc = spawn(config.runner.java,  args, {
+        cwd: workingDir,
+      });
+      this.followLogs(this.proc)
+      this.proc.on('exit', async function (self) {
+        try {
+          if (self.locked) {
+            if (self.proc.exitCode === 0) {
+              await self.notifier.notify('done', {evidencePath: evidence})
+            } else {
+              await self.notifier.notify('failed', {evidencePath: evidence})
+            }
+            await self.unlock()
+          }
+        } finally {
+          self.locked = false
+        }
+      }(this))
+    } catch (err) {
+      this.locked = false
+      throw err
     }
-    return exitStatus
   }
 
-  async followLogs () {
-    this.proc.stdout.on('data', (data) => {
-      console.log(data.toString())
-    });
-    this.proc.stderr.on('data', (data) => {
-      console.error(data.toString())
+  wait () {
+    const self = this
+    return new Promise((resolve, reject) => {
+      if (!self.proc || self.proc.exitCode != null || self.proc.pid == null) {
+        return reject('not running')
+      }
+      self.proc.on('exit', resolve)
     })
   }
 
-  async lockCreateStart (evidence, caseDir, profile) {
-    await this.lock(evidence)
-    this.proc = await this.create(evidence, caseDir, profile)
-    const unlock = true
-    this.start(unlock)
-    return this.proc
+  followLogs (proc) {
+    proc.stdout.on('data', (data) => {
+      console.log(data.toString())
+    });
+    proc.stderr.on('data', (data) => {
+      console.error(data.toString())
+    })
   }
-
 
   async watch (url) {
     const single = async () => {
@@ -103,8 +92,8 @@ export class Runner extends EventEmitter {
           return
         }
         const {evidencePath,outputPath,profile} = data
-        await Runner.lockCreateStart(evidencePath,outputPath,profile)
-        await Runner.wait()
+        await this.start(evidencePath,outputPath,profile)
+        await this.wait()
       } catch (err) {
         console.log(err)
       }
