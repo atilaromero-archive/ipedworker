@@ -26,34 +26,39 @@ export class Runner extends EventEmitter {
       '-jar', config.runner.jar,
       '-d', path.basename(evidence),
       '-o', caseDir,
-      '-profile', profile,
       '--portable',
       '--nologfile',
       '--nogui'
     ]
+    if (profile) {
+      args.push('-profile', profile)
+    }
     assert (this.locked === false)
     this.locked = true
     try {
-      await this.lock(evidence)
+      await this.remoteLocker.lock(evidence)
       await this.notifier.notify('running', {evidencePath: evidence})
       this.proc = spawn(config.runner.java,  args, {
         cwd: workingDir,
       });
       this.followLogs(this.proc)
-      this.proc.on('exit', async function (self) {
-        try {
-          if (self.locked) {
-            if (self.proc.exitCode === 0) {
-              await self.notifier.notify('done', {evidencePath: evidence})
-            } else {
-              await self.notifier.notify('failed', {evidencePath: evidence})
+      this.proc.on('exit', () => {
+        async function f (self) {
+          try {
+            if (self.locked) {
+              if (self.proc.exitCode === 0) {
+                await self.notifier.notify('done', {evidencePath: evidence})
+              } else {
+                await self.notifier.notify('failed', {evidencePath: evidence})
+              }
+              await self.remoteLocker.unlock()
             }
-            await self.unlock()
+          } finally {
+            self.locked = false
           }
-        } finally {
-          self.locked = false
         }
-      }(this))
+        return f(this)
+      })
     } catch (err) {
       this.locked = false
       throw err
@@ -88,10 +93,10 @@ export class Runner extends EventEmitter {
           return
         }
         const data = await req.json()
-        if (!data) {
+        if (!data || data.length === 0) {
           return
         }
-        const {evidencePath,outputPath,profile} = data
+        const {evidencePath,outputPath,profile} = data[0]
         await this.start(evidencePath,outputPath,profile)
         await this.wait()
       } catch (err) {

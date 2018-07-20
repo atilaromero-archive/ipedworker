@@ -8,6 +8,7 @@ export class NoLock {
 export class RemoteLocker {
 
   constructor (fetch, url) {
+    console.log({fetch, url})
     this.fetch = fetch
     this.url = url
     this.notifier = new Notifier(url)

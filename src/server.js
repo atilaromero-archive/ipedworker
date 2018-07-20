@@ -3,6 +3,7 @@ const Inert = require('inert');
 const Vision = require('vision');
 const HapiSwagger = require('hapi-swagger');
 import config from 'config'
+import Notifier from './runner/notifier'
 
 import {NoLock, RemoteLocker} from './runner/remote-locker'
 import {Runner} from './runner/runner'
@@ -10,11 +11,19 @@ const Pack = require('../package');
 
 let locker
 if (config.lockURL) {
-  locker = new RemoteLocker()
+  locker = new RemoteLocker(require('node-fetch'), config.lockURL)
 } else {
   locker = new NoLock()
 }
 
+let notifier
+if (config.notifyURL) {
+  notifier = new Notifier(config.notifyURL)
+} else {
+  notifier = {
+    notify: () => null
+  }
+}
 
 const runserver = async () => {
   const server = await new Hapi.Server({
@@ -39,9 +48,7 @@ const runserver = async () => {
     }
   ]);
 
-
-  const runner = new Runner(locker)
-
+  const runner = new Runner(locker, notifier)
 
   const routes = [
     require('./routes/status-get')(runner),
@@ -55,7 +62,7 @@ const runserver = async () => {
     console.log('Server running at:', server.info.uri);
     if (config.watchURL) {
       console.log('watching', config.watchURL)
-      Runner.watch(config.watchURL)
+      runner.watch(config.watchURL)
     }
   } catch(err) {
     console.log(err);

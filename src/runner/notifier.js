@@ -2,6 +2,7 @@ import fetch from 'node-fetch'
 
 export default class Notifier {
   constructor (url) {
+    console.log({url})
     this.url = url
   }
   async notify (type, payload) {
