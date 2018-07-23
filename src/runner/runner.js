@@ -1,12 +1,36 @@
 const assert = require('assert')
 const config = require('config')
-const fetch = require('node-fetch')
 const EventEmitter = require('events')
 const path = require('path')
 const spawn = require('child_process').spawn
+const fs = require('fs')
+
+const saveLogs = async function (proc, dst) {
+  const f = await new Promise((resolve, reject) => Runner.fs.open(dst,'r', (err, f) => {
+    if (err) { reject(err) }
+    resolve(f)
+  }))
+  proc.stdout.on('data', (data) => {
+    f.write(data.toString())
+  });
+  proc.stderr.on('data', (data) => {
+    f.write(data.toString())
+  })
+  proc.on('exit', () => {
+    f.close()
+  })
+}
+
+function followLogs (proc) {
+  proc.stdout.on('data', (data) => {
+    console.log(data.toString())
+  });
+  proc.stderr.on('data', (data) => {
+    console.error(data.toString())
+  })
+}
 
 class Runner extends EventEmitter {
-
   constructor (remoteLocker, notifier) {
     super()
     this.proc = null
@@ -39,10 +63,11 @@ class Runner extends EventEmitter {
     try {
       await this.remoteLocker.lock(evidence)
       await this.notifier.notify('running', {evidencePath: evidence})
-      this.proc = spawn(config.runner.java,  args, {
+      this.proc = Runner.spawn(config.runner.java,  args, {
         cwd: workingDir,
       });
-      this.followLogs(this.proc)
+      saveLogs(this.proc, path.join(caseDir, 'IPED.log'))
+      followLogs(this.proc)
       this.proc.on('exit', () => {
         async function f (self) {
           try {
@@ -56,9 +81,6 @@ class Runner extends EventEmitter {
             }
           } finally {
             self.locked = false
-            if (self.singleRun) {
-              process.exit(self.proc.exitCode)
-            }
           }
         }
         return f(this)
@@ -79,19 +101,10 @@ class Runner extends EventEmitter {
     })
   }
 
-  followLogs (proc) {
-    proc.stdout.on('data', (data) => {
-      console.log(data.toString())
-    });
-    proc.stderr.on('data', (data) => {
-      console.error(data.toString())
-    })
-  }
-
   async watch (url) {
     const single = async () => {
       try {
-        const req = await fetch(url)
+        const req = await Runner.fetch(url)
         if (!req.ok) {
           console.log(await req.text())
           return
@@ -111,7 +124,12 @@ class Runner extends EventEmitter {
     while (true) {
       await single()
       await new Promise(resolve => setTimeout(resolve, (config.watchSeconds || 1) * 1000))
+      if (this.singleRun){
+        return
+      }
     }
   }
 }
+Runner.spawn = spawn
+Runner.fs = fs
 export default Runner
