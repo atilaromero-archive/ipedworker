@@ -13,6 +13,7 @@ class Runner extends EventEmitter {
     this.locked = false
     this.remoteLocker = remoteLocker
     this.notifier = notifier
+    this.singleRun = true
 
     this.start = this.start.bind(this)
     this.wait = this.wait.bind(this)
@@ -55,6 +56,9 @@ class Runner extends EventEmitter {
             }
           } finally {
             self.locked = false
+            if (self.singleRun) {
+              process.exit(self.proc.exitCode)
+            }
           }
         }
         return f(this)
