@@ -1,3 +1,4 @@
+const assert = require('assert')
 import Notifier from './notifier'
 
 export class NoLock {
@@ -7,20 +8,20 @@ export class NoLock {
 
 export class RemoteLocker {
 
-  constructor (fetch, url) {
-    console.log({fetch, url})
-    this.fetch = fetch
+  constructor (url) {
     this.url = url
     this.notifier = new Notifier(url)
   }
 
   async lock (evidencePath) {
     this.evidencePath = evidencePath
-    return await this.notifier.notify('LOCK', {evidencePath})
+    let response = await this.notifier.notify('LOCK', {evidencePath})
+    assert(response && response.ok)
   }
 
   async unlock () {
-    return await this.notifier.notify('UNLOCK', {evidencePath: this.evidencePath})
+    let response = await this.notifier.notify('UNLOCK', {evidencePath: this.evidencePath})
+    assert(response && response.ok)
   }
 
 }

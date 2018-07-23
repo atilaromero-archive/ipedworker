@@ -6,12 +6,12 @@ import config from 'config'
 import Notifier from './runner/notifier'
 
 import {NoLock, RemoteLocker} from './runner/remote-locker'
-import {Runner} from './runner/runner'
+import Runner from './runner/runner'
 const Pack = require('../package');
 
 let locker
 if (config.lockURL) {
-  locker = new RemoteLocker(require('node-fetch'), config.lockURL)
+  locker = new RemoteLocker(config.lockURL)
 } else {
   locker = new NoLock()
 }

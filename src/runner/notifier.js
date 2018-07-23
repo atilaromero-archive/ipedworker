@@ -1,12 +1,11 @@
-import fetch from 'node-fetch'
+import nodeFetch from 'node-fetch'
 
-export default class Notifier {
+class Notifier {
   constructor (url) {
-    console.log({url})
     this.url = url
   }
   async notify (type, payload) {
-    return await fetch(this.url, {
+    return await Notifier.fetch(this.url, {
       method: 'POST',
       body: JSON.stringify({
         type,
@@ -16,3 +15,5 @@ export default class Notifier {
     })
   }
 }
+Notifier.fetch = nodeFetch
+export default Notifier

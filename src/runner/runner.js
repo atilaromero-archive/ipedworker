@@ -5,7 +5,7 @@ const EventEmitter = require('events')
 const path = require('path')
 const spawn = require('child_process').spawn
 
-export class Runner extends EventEmitter {
+class Runner extends EventEmitter {
 
   constructor (remoteLocker, notifier) {
     super()
@@ -110,3 +110,4 @@ export class Runner extends EventEmitter {
     }
   }
 }
+export default Runner
