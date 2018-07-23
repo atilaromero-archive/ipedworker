@@ -1,19 +1,18 @@
 FROM 192.168.2.191:5001/ipeddocker/iped:3.14.2
 
-ADD https://deb.nodesource.com/setup_8.x /root/
+RUN python -c 'import urllib; urllib.urlretrieve("https://deb.nodesource.com/setup_8.x", "/root/setup_8.x")'
 
 RUN bash /root/setup_8.x
 
-RUN apt-get install -y nodejs 
-
-RUN apt-get clean  \
+RUN apt-get install -y nodejs \
+    && apt-get clean  \
     && rm -rf /var/lib/apt/lists/*
 
-ADD ./package.json /usr/local/src/ipedworker/
 WORKDIR /usr/local/src/ipedworker
+COPY ./package.json ./
 
 RUN npm install --only=production
 
-ADD ./ /usr/local/src/ipedworker
+COPY ./ ./
 
 CMD ["npm", "start"]
