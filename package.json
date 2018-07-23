@@ -5,7 +5,7 @@
   "main": "src/server.js",
   "scripts": {
     "test": "jest",
-    "start": "nodemon --exec babel-node src/server.js",
+    "start": "babel-node src/server.js",
     "build": "babel src -d build",
     "serve": "node build/server.js"
   },
