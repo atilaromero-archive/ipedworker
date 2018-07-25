@@ -66,7 +66,7 @@ class Runner extends EventEmitter {
       this.proc = Runner.spawn(config.runner.java,  args, {
         cwd: workingDir,
       });
-      saveLogs(this.proc, path.join(caseDir, 'IPED.log'))
+      saveLogs(this.proc, path.resolve(workingDir, caseDir, 'IPED.log'))
       followLogs(this.proc)
       this.proc.on('exit', () => {
         async function f (self) {
