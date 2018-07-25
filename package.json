@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "eslint": "^4.18.1",
+    "fetch-mock": "^6.5.2",
     "jest": "^23.3.0"
   }
 }

@@ -63,7 +63,8 @@ class Runner extends EventEmitter {
     this.locked = true
     try {
       await this.remoteLocker.lock(evidence)
-      await this.notifier.notify('running', {evidencePath: evidence})
+      let noted = await this.notifier.notify('running', {evidencePath: evidence})
+      if (!noted.ok) { console.error({error: await noted.text()}) }
       this.proc = Runner.spawn(config.runner.java,  args, {
         cwd: workingDir,
       });

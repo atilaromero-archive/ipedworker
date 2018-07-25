@@ -1,6 +1,10 @@
 /* eslint-env jest */
 import {NoLock} from './remote-locker'
 import Runner from './runner'
+const fetchMock = require('fetch-mock')
+
+fetchMock.mock('http://asdf.asdf.ok', 200)
+fetchMock.mock('http://asdf.asdf.err', 400)
 
 Runner.fs = {
   open: (path, flags, fn) => {
@@ -28,7 +32,7 @@ Runner.spawn = (...args) => {
 
 it('', done => {
   (async function () {
-    const runner = new Runner(new NoLock(), {notify: console.log})
+    const runner = new Runner(new NoLock(), {notify: () => fetch('http://asdf.asdf.err')})
     await runner.start('myevidence', 'mycase', 'myprofile')
     done()
   })()
