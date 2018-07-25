@@ -9,7 +9,8 @@ Runner.fs = {
       write: console.log,
       close: () => null
     })
-  }
+  },
+  mkdir: (path, fn) => fn()
 }
 Runner.spawn = (...args) => {
   console.log(args)

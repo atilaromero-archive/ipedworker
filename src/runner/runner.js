@@ -6,6 +6,7 @@ const spawn = require('child_process').spawn
 const fs = require('fs')
 
 const saveLogs = async function (proc, dst) {
+  await new Promise(resolve => Runner.fs.mkdir(path.dirname(dst),resolve))
   const f = await new Promise((resolve, reject) => Runner.fs.open(dst,'r', (err, f) => {
     if (err) { reject(err) }
     resolve(f)
