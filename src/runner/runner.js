@@ -63,12 +63,20 @@ class Runner extends EventEmitter {
     this.locked = true
     try {
       await this.remoteLocker.lock(evidence)
+    } catch (err) {
+      console.log({err})
+      this.locked = false
+      throw err
+    }
+    try {
       let noted = await this.notifier.notify('running', {evidencePath: evidence})
-      if (!noted.ok) { console.error({error: await noted.text()}) }
+      if (!noted.ok) {
+        throw {error: await noted.text()}
+      }
       this.proc = Runner.spawn(config.runner.java,  args, {
         cwd: workingDir,
       });
-      saveLogs(this.proc, path.resolve(workingDir, caseDir, 'IPED.log'))
+      await saveLogs(this.proc, path.resolve(workingDir, caseDir, 'IPED.log'))
       followLogs(this.proc)
       this.proc.on('exit', () => {
         async function f (self) {
@@ -88,6 +96,13 @@ class Runner extends EventEmitter {
         return f(this)
       })
     } catch (err) {
+      console.log({err})
+      try {
+        await this.remoteLocker.lock(evidence)
+      } catch (err2) {
+        console.log({err2})
+      }
+      await this.remoteLocker.unlock()
       this.locked = false
       throw err
     }
