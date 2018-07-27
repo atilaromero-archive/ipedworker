@@ -7,18 +7,18 @@ const fs = require('fs')
 
 const saveLogs = async function (proc, dst) {
   await new Promise(resolve => Runner.fs.mkdir(path.dirname(dst),resolve))
-  const f = await new Promise((resolve, reject) => Runner.fs.open(dst,'r', (err, f) => {
-    if (err) { reject(err) }
+  const f = await new Promise((resolve, reject) => Runner.fs.open(dst,'w', (err, f) => {
+    if (err) { return reject(err) }
     resolve(f)
   }))
   proc.stdout.on('data', (data) => {
-    f.write(data.toString())
+    fs.write(f, data.toString(), () => null)
   });
   proc.stderr.on('data', (data) => {
-    f.write(data.toString())
+    fs.write(f, data.toString(), () => null)
   })
   proc.on('exit', () => {
-    f.close()
+    fs.close(f, () => null)
   })
 }
 
