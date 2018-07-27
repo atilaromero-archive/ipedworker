@@ -1,12 +1,14 @@
 FROM 192.168.2.191:5001/ipeddocker/iped:3.14.3
 
-RUN python -c 'import urllib; urllib.urlretrieve("https://deb.nodesource.com/setup_8.x", "/root/setup_8.x")'
+ENV NODE_VERSION 10.7.0
+RUN python -c "import urllib; urllib.urlretrieve('https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz', '/tmp/node-v${NODE_VERSION}-linux-x64.tar.xz')"
 
-RUN bash /root/setup_8.x
-
-RUN apt-get install -y nodejs \
-    && apt-get clean  \
-    && rm -rf /var/lib/apt/lists/*
+RUN tar xf /tmp/node-v${NODE_VERSION}-linux-x64.tar.xz -C /
+RUN tar xf /tmp/node-v${NODE_VERSION}-linux-x64.tar.xz --strip-components=1 -C /usr/ node-v${NODE_VERSION}-linux-x64/bin
+RUN tar xf /tmp/node-v${NODE_VERSION}-linux-x64.tar.xz --strip-components=1 -C /usr/ node-v${NODE_VERSION}-linux-x64/include
+RUN tar xf /tmp/node-v${NODE_VERSION}-linux-x64.tar.xz --strip-components=1 -C /usr/ node-v${NODE_VERSION}-linux-x64/lib
+RUN tar xf /tmp/node-v${NODE_VERSION}-linux-x64.tar.xz --strip-components=1 -C /usr/ node-v${NODE_VERSION}-linux-x64/share
+RUN ldconfig
 
 WORKDIR /usr/local/src/ipedworker
 COPY ./package.json ./
