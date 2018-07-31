@@ -62,7 +62,7 @@ class Runner extends EventEmitter {
       await this.remoteLocker.lock(evidence)
       let noted = await this.notifier.notify('running', {evidencePath: evidence})
       if (!noted.ok) {
-        throw {error: await noted.text()}
+        throw {noted_error: await noted.text()}
       }
       this.proc = Runner.spawn(config.runner.java,  args, {
         cwd: workingDir,
@@ -88,14 +88,14 @@ class Runner extends EventEmitter {
       })
     } catch (err) {
       console.log({err})
+      this.notifier.notify('failed', {evidencePath: evidence})
+      throw err
+    } finally {
       try {
-        await this.remoteLocker.lock(evidence)
+        await this.remoteLocker.unlock()
       } catch (err2) {
         console.log({err2})
       }
-      await this.remoteLocker.unlock()
-      this.locked = false
-      throw err
     }
   }
 

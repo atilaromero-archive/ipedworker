@@ -14,6 +14,8 @@ Runner.fs = {
       close: () => null
     })
   },
+  write: () => null,
+  close: () => null,
   mkdir: (path, fn) => fn()
 }
 Runner.spawn = (...args) => {
@@ -32,7 +34,9 @@ Runner.spawn = (...args) => {
 
 it('', done => {
   (async function () {
-    const runner = new Runner(new NoLock(), {notify: () => fetch('http://asdf.asdf.err')})
+    const runner = new Runner(new NoLock(), {
+      notify: () => global.fetch('http://asdf.asdf.ok')
+    })
     await runner.start('myevidence', 'mycase', 'myprofile')
     done()
   })()
