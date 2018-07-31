@@ -1,4 +1,3 @@
-const assert = require('assert')
 const config = require('config')
 const EventEmitter = require('events')
 const path = require('path')
@@ -12,13 +11,13 @@ const saveLogs = async function (proc, dst) {
     resolve(f)
   }))
   proc.stdout.on('data', (data) => {
-    fs.write(f, data.toString(), () => null)
+    Runner.fs.write(f, data.toString(), () => null)
   });
   proc.stderr.on('data', (data) => {
-    fs.write(f, data.toString(), () => null)
+    Runner.fs.write(f, data.toString(), () => null)
   })
   proc.on('exit', () => {
-    fs.close(f, () => null)
+    Runner.fs.close(f, () => null)
   })
 }
 
