@@ -35,7 +35,6 @@ class Runner extends EventEmitter {
   constructor (remoteLocker, notifier) {
     super()
     this.proc = null
-    this.locked = false
     this.remoteLocker = remoteLocker
     this.notifier = notifier
     this.singleRun = true
@@ -59,16 +58,8 @@ class Runner extends EventEmitter {
     if (profile) {
       args.push('-profile', profile)
     }
-    assert (this.locked === false)
-    this.locked = true
     try {
       await this.remoteLocker.lock(evidence)
-    } catch (err) {
-      console.log({err})
-      this.locked = false
-      throw err
-    }
-    try {
       let noted = await this.notifier.notify('running', {evidencePath: evidence})
       if (!noted.ok) {
         throw {error: await noted.text()}
