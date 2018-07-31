@@ -3,6 +3,7 @@ const EventEmitter = require('events')
 const path = require('path')
 const spawn = require('child_process').spawn
 const fs = require('fs')
+const fetch = require('node-fetch')
 
 const saveLogs = async function (proc, dst) {
   await new Promise(resolve => Runner.fs.mkdir(path.dirname(dst),resolve))
@@ -95,6 +96,9 @@ class Runner extends EventEmitter {
       } catch (err2) {
         console.log({err2})
       }
+      if (this.singleRun){
+        process.exit(0)
+      }
     }
   }
 
@@ -113,11 +117,12 @@ class Runner extends EventEmitter {
       try {
         const req = await Runner.fetch(url)
         if (!req.ok) {
-          console.log(await req.text())
+          console.log('response not ok', await req.text())
           return
         }
         const data = await req.json()
         if (!data || data.length === 0) {
+          console.log('empty response', {data})
           return
         }
         const {evidencePath,outputPath,profile} = data[0]
@@ -131,12 +136,10 @@ class Runner extends EventEmitter {
     while (true) {
       await single()
       await new Promise(resolve => setTimeout(resolve, (config.watchSeconds || 1) * 1000))
-      if (this.singleRun){
-        return
-      }
     }
   }
 }
 Runner.spawn = spawn
 Runner.fs = fs
+Runner.fetch = fetch
 export default Runner

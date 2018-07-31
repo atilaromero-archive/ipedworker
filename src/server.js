@@ -62,10 +62,12 @@ const runserver = async () => {
     console.log('Server running at:', server.info.uri);
     if (config.watchURL) {
       console.log('watching', config.watchURL)
-      runner.watch(config.watchURL)
+      await runner.watch(config.watchURL)
+      process.exit(0)
     }
   } catch(err) {
-    console.log(err);
+    console.log({err});
+    process.exit(1)
   }
 }
 
